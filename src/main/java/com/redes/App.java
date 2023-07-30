@@ -17,12 +17,15 @@ import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.vcardtemp.VCardManager;
+import org.jivesoftware.smackx.vcardtemp.packet.VCard;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Scanner;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,6 +36,7 @@ import java.util.logging.Logger;
  */
 public class App {
     public static void main(String[] args) throws XmppStringprepException, InterruptedException {
+        Scanner input = new Scanner(System.in);
         String serverAddress = "alumchat.xyz";
         String xmppServiceName = "alumchat.xyz";
         int serverPort = 5222; // Default XMPP port
@@ -60,44 +64,120 @@ public class App {
         System.out.println("Connection: " + connection);
         try {
             connection.connect();
-            connection.login("val20441", "gamesfan10");
-            System.out.println("It now sorta of works!");
-            ChatManager chatManager = ChatManager.getInstanceFor(connection);
-            Roster roster = Roster.getInstanceFor(connection);
-            // Optionally, add a RosterListener to receive updates on roster changes
-            roster.addRosterListener(new RosterListener() {
-                @Override
-                public void entriesAdded(Collection<Jid> addresses) {
-                    // Handle roster entries added
-                    for (Jid address : addresses) {
-                        System.out.println("New contact added: " + address);
+            System.out.println("¿Qué desea hacer?\n1. Crear cuenta.\n2. Ingresar\n3. Eliminar cuenta");
+            int userName = input.nextInt();
+            System.out.println(userName);
+            if (userName == 1) {
+
+            } else if (userName == 2) {
+                connection.login("val20441", "gamesfan10");
+                ChatManager chatManager = ChatManager.getInstanceFor(connection);
+                Roster roster = Roster.getInstanceFor(connection);
+                int input1 = input.nextInt();
+                if (input1 == 1) {
+
+                    roster.addRosterListener(new RosterListener() {
+
+                        @Override
+                        public void entriesAdded(Collection<Jid> addresses) {
+                            // Handle roster entries added
+                            for (Jid address : addresses) {
+                                System.out.println("New contact added: " + address);
+                            }
+                        }
+
+                        @Override
+                        public void entriesUpdated(Collection<Jid> addresses) {
+                            // Handle roster entries updated
+                            for (Jid address : addresses) {
+                                System.out.println("Contact updated: " + address);
+                            }
+                        }
+
+                        @Override
+                        public void entriesDeleted(Collection<Jid> addresses) {
+                            // Handle roster entries deleted
+                            for (Jid address : addresses) {
+                                System.out.println("Contact deleted: " + address);
+                            }
+                        }
+
+                        @Override
+                        public void presenceChanged(org.jivesoftware.smack.packet.Presence presence) {
+                            // Handle presence changes
+                            System.out.println("Presence changed: " + presence.getFrom() + " - " +
+                                    presence.getType());
+                        }
+                    });
+
+                    String newContactJID = "echobot@alumchat.xyz"; // Replace with the JID of the new contact
+                    String newContactName = "Echobot"; // Replace with the name of the new contact (optional)
+
+                    EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
+                    roster.createItemAndRequestSubscription(jid, newContactName, null);
+                    System.out.println("Roster size: " + roster.getEntries().size());
+                } else if (input1 == 2) {
+                    System.out.println("Roster size: " + roster.getEntries().size());
+                } else if (input1 == 3) {
+
+                    // Request the user's information (vCard)
+                    EntityBareJid jid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
+                    RosterEntry entry = roster.getEntry(jid);
+                    // jid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
+                    // vCard = vCardManager.loadVCard(jid);
+
+                    System.out.println(entry);
+                    if (entry != null) {
+                        // Print the user's information
+                        System.out.println("User Information for: " + "Echobot");
+                        System.out.println("Email: " + entry.getJid());
+                        System.out.println("JID: " + entry.getName());
                     }
                 }
-
-                @Override
-                public void entriesUpdated(Collection<Jid> addresses) {
-                    // Handle roster entries updated
-                    for (Jid address : addresses) {
-                        System.out.println("Contact updated: " + address);
-                    }
-                }
-
-                @Override
-                public void entriesDeleted(Collection<Jid> addresses) {
-                    // Handle roster entries deleted
-                    for (Jid address : addresses) {
-                        System.out.println("Contact deleted: " + address);
-                    }
-                }
-
-                @Override
-                public void presenceChanged(org.jivesoftware.smack.packet.Presence presence) {
-                    // Handle presence changes
-                    System.out.println("Presence changed: " + presence.getFrom() + " - " + presence.getType());
-                }
-            });
-
-            // Print all contacts (roster entries)
+            }
+            /*
+             * connection.login("val20441", "gamesfan10");
+             * System.out.println("It now sorta of works!");
+             * ChatManager chatManager = ChatManager.getInstanceFor(connection);
+             * Roster roster = Roster.getInstanceFor(connection);
+             * // Optionally, add a RosterListener to receive updates on roster changes
+             * roster.addRosterListener(new RosterListener() {
+             * 
+             * @Override
+             * public void entriesAdded(Collection<Jid> addresses) {
+             * // Handle roster entries added
+             * for (Jid address : addresses) {
+             * System.out.println("New contact added: " + address);
+             * }
+             * }
+             * 
+             * @Override
+             * public void entriesUpdated(Collection<Jid> addresses) {
+             * // Handle roster entries updated
+             * for (Jid address : addresses) {
+             * System.out.println("Contact updated: " + address);
+             * }
+             * }
+             * 
+             * @Override
+             * public void entriesDeleted(Collection<Jid> addresses) {
+             * // Handle roster entries deleted
+             * for (Jid address : addresses) {
+             * System.out.println("Contact deleted: " + address);
+             * }
+             * }
+             * 
+             * @Override
+             * public void presenceChanged(org.jivesoftware.smack.packet.Presence presence)
+             * {
+             * // Handle presence changes
+             * System.out.println("Presence changed: " + presence.getFrom() + " - " +
+             * presence.getType());
+             * }
+             * });
+             * 
+             * // Print all contacts (roster entries)
+             */
 
             /*
              * String newContactJID = "echobot@alumchat.xyz"; // Replace with the JID of the
@@ -107,21 +187,21 @@ public class App {
              * 
              * EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
              * roster.createItemAndRequestSubscription(jid, newContactName, null);
-             */
-
-            System.out.println("Contacts (Roster Entries):");
-            System.out.println("Roster size: " + roster.getEntries().size());
-
-            for (RosterEntry entry : roster.getEntries()) {
-                System.out.println("JID: " + entry.getJid());
-                System.out.println("Name: " + entry.getName());
-                System.out.println("Groups: ");
-                for (RosterGroup group : entry.getGroups()) {
-                    System.out.println("- " + group.getName());
-                }
-                System.out.println("-------------------------");
-            }
-            /*
+             * 
+             * 
+             * System.out.println("Contacts (Roster Entries):");
+             * System.out.println("Roster size: " + roster.getEntries().size());
+             * 
+             * for (RosterEntry entry : roster.getEntries()) {
+             * System.out.println("JID: " + entry.getJid());
+             * System.out.println("Name: " + entry.getName());
+             * System.out.println("Groups: ");
+             * for (RosterGroup group : entry.getGroups()) {
+             * System.out.println("- " + group.getName());
+             * }
+             * System.out.println("-------------------------");
+             * }
+             * /*
              * String recipientJID = "";
              * 
              * // Create a chat session
@@ -145,7 +225,7 @@ public class App {
              * });
              */
 
-            // User authenticated, perform your XMPP operations
+            // User authenticated, perform your XMPP operations*/
         } catch (SmackException | XMPPException | IOException | NullPointerException e) {
             e.printStackTrace();
             System.out.println("Connection failed. Check for any errors.");
