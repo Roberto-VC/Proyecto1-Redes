@@ -71,7 +71,13 @@ public class App {
             if (userName == 1) {
 
             } else if (userName == 2) {
-                connection.login("val20441", "gamesfan10");
+                System.out.println("Ingrese su usuario");
+                input.nextLine();
+                String user = input.nextLine();
+                System.out.println("Ingrese su contraseña");
+                input.nextLine();
+                String password = input.nextLine();
+                connection.login(user, password);
                 ChatManager chatManager = ChatManager.getInstanceFor(connection);
                 chatManager.addIncomingListener(new IncomingChatMessageListener() {
                     @Override
@@ -81,6 +87,7 @@ public class App {
                 });
 
                 Roster roster = Roster.getInstanceFor(connection);
+                System.out.println("Ingrese que hacer");
                 int input1 = input.nextInt();
                 if (input1 == 1) {
 
