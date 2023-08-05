@@ -155,20 +155,13 @@ public class App {
                     }
                 } else if (input1 == 4) {
                     // Keep the main thread running to receive notifications
-                    Thread messageReceiverThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (true) {
-                                // Sleep for some time to avoid busy-waiting
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    });
-                    messageReceiverThread.start();
+                    System.out.println("Ingrese el usuario");
+                    input.nextLine();
+                    String users = input.nextLine();
+                    users = users + "@alumchat.xyz";
+                    EntityBareJid recipient = JidCreate.entityBareFrom(users);
+                    Chat chat = chatManager.chatWith(recipient);
+                    chat.send("Hello, this is a test message!");
 
                     // Keep the main thread waiting for user input
 
