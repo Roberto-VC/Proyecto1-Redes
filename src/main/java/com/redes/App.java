@@ -95,6 +95,44 @@ public class App {
                 });
 
                 Roster roster = Roster.getInstanceFor(connection);
+                roster.addRosterListener(new RosterListener() {
+                    @Override
+                    public void entriesAdded(Collection<Jid> addresses) {
+                        System.out.println("Entries Added:");
+                        for (Jid address : addresses) {
+                            System.out.println(" - " + address);
+                        }
+                        System.out.println();
+                    }
+
+                    @Override
+                    public void entriesUpdated(Collection<Jid> addresses) {
+                        System.out.println("Entries Updated:");
+                        for (Jid address : addresses) {
+                            System.out.println(" - " + address);
+                        }
+                        System.out.println();
+                    }
+
+                    @Override
+                    public void entriesDeleted(Collection<Jid> addresses) {
+                        System.out.println("Entries Deleted:");
+                        for (Jid address : addresses) {
+                            System.out.println(" - " + address);
+                        }
+                        System.out.println();
+                    }
+
+                    @Override
+                    public void presenceChanged(Presence presence) {
+                        Jid contactJid = presence.getFrom();
+                        Presence.Type presenceType = presence.getType();
+                        System.out.println("Presence Changed:");
+                        System.out.println(" - Contact JID: " + contactJid);
+                        System.out.println(" - Presence Type: " + presenceType);
+                        System.out.println();
+                    }
+                });
                 System.out.println("Ingrese que hacer");
                 int input1 = input.nextInt();
                 if (input1 == 1) {
@@ -143,13 +181,17 @@ public class App {
                     System.out.println("Roster size: " + roster.getEntries().size());
                 } else if (input1 == 3) {
 
-                    EntityBareJid jid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
+                    System.out.println("Ingrese el usuario");
+                    input.nextLine();
+                    String users = input.nextLine();
+                    users = users + "@alumchat.xyz";
+                    EntityBareJid jid = JidCreate.entityBareFrom(users);
                     RosterEntry entry = roster.getEntry(jid);
 
                     System.out.println(entry);
                     if (entry != null) {
                         // Print the user's information
-                        System.out.println("User Information for: " + "Echobot");
+                        System.out.println("User Information for: " + users);
                         System.out.println("Email: " + entry.getJid());
                         System.out.println("JID: " + entry.getName());
                         Presence presence = roster.getPresence(jid);
