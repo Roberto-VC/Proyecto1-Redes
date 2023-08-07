@@ -78,11 +78,10 @@ public class App {
             if (userName == 1) {
 
             } else if (userName == 2) {
-                System.out.println("Ingrese su usuario");
+                System.out.println("Ingrese su usuario:");
                 input.nextLine();
                 String user = input.nextLine();
                 System.out.println("Ingrese su contraseña");
-                input.nextLine();
                 String password = input.nextLine();
                 connection.login(user, password);
                 ChatManager chatManager = ChatManager.getInstanceFor(connection);
@@ -98,29 +97,17 @@ public class App {
                 roster.addRosterListener(new RosterListener() {
                     @Override
                     public void entriesAdded(Collection<Jid> addresses) {
-                        System.out.println("Entries Added:");
-                        for (Jid address : addresses) {
-                            System.out.println(" - " + address);
-                        }
-                        System.out.println();
+
                     }
 
                     @Override
                     public void entriesUpdated(Collection<Jid> addresses) {
-                        System.out.println("Entries Updated:");
-                        for (Jid address : addresses) {
-                            System.out.println(" - " + address);
-                        }
-                        System.out.println();
+
                     }
 
                     @Override
                     public void entriesDeleted(Collection<Jid> addresses) {
-                        System.out.println("Entries Deleted:");
-                        for (Jid address : addresses) {
-                            System.out.println(" - " + address);
-                        }
-                        System.out.println();
+
                     }
 
                     @Override
@@ -133,7 +120,7 @@ public class App {
                         System.out.println();
                     }
                 });
-                System.out.println("Ingrese que hacer");
+                System.out.println("Ingrese que hacer?\n1.Añadir Contacto");
                 int input1 = input.nextInt();
                 if (input1 == 1) {
 
@@ -176,7 +163,6 @@ public class App {
 
                     EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
                     roster.createItemAndRequestSubscription(jid, newContactName, null);
-                    System.out.println("Roster size: " + roster.getEntries().size());
                 } else if (input1 == 2) {
                     System.out.println("Roster size: " + roster.getEntries().size());
                 } else if (input1 == 3) {
@@ -184,16 +170,16 @@ public class App {
                     System.out.println("Ingrese el usuario");
                     input.nextLine();
                     String users = input.nextLine();
-                    users = users + "@alumchat.xyz";
+                    user = users + "@alumchat.xyz";
                     EntityBareJid jid = JidCreate.entityBareFrom(users);
                     RosterEntry entry = roster.getEntry(jid);
 
                     System.out.println(entry);
                     if (entry != null) {
                         // Print the user's information
-                        System.out.println("User Information for: " + users);
+                        System.out.println("User Information for: " + user);
                         System.out.println("Email: " + entry.getJid());
-                        System.out.println("JID: " + entry.getName());
+                        System.out.println("JID: " + entry.getJid());
                         Presence presence = roster.getPresence(jid);
                         if (presence.isAvailable()) {
                             System.out.println("Online");
