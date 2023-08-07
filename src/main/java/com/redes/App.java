@@ -1,5 +1,6 @@
 package com.redes;
 
+import java.io.File;
 import java.io.IOException;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.SmackException;
@@ -18,11 +19,17 @@ import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.filetransfer.FileTransfer;
+import org.jivesoftware.smackx.filetransfer.FileTransferManager;
+import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
+
 import org.jivesoftware.smackx.vcardtemp.VCardManager;
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 import java.io.IOException;
 import java.util.Collection;
@@ -79,6 +86,7 @@ public class App {
                 String password = input.nextLine();
                 connection.login(user, password);
                 ChatManager chatManager = ChatManager.getInstanceFor(connection);
+
                 chatManager.addIncomingListener(new IncomingChatMessageListener() {
                     @Override
                     public void newIncomingMessage(EntityBareJid from, Message message, Chat chat) {
@@ -165,6 +173,45 @@ public class App {
 
                     // Keep the main thread waiting for user input
 
+                } else if (input1 == 5) {
+                    System.out.println(":)");
+                    EntityBareJid recipientBareJid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
+                    Collection<RosterEntry> rosterEntries = roster.getEntries();
+                    for (RosterEntry entry : rosterEntries) {
+                        System.out.print(entry.getJid());
+                        System.out.print("\n");
+                        System.out.println(entry.getJid().equals(recipientBareJid));
+                        if (entry.getJid().equals(recipientBareJid)) {
+                            Presence presence = roster.getPresence(entry.getJid());
+                            EntityFullJid resource = presence.getFrom().asEntityFullJidIfPossible();
+                            if (resource != null) {
+                                System.out.println(resource);
+                                // Create a FileTransferManager
+                                FileTransferManager transferManager = FileTransferManager.getInstanceFor(connection);
+
+                                // Create an OutgoingFileTransfer using the selected resource
+                                OutgoingFileTransfer transfer = transferManager.createOutgoingFileTransfer(resource);
+
+                                // Specify the file to send
+                                File fileToSend = new File("C:\\Users\\rober\\Look.txt");
+
+                                // Initiate the file transfer
+                                transfer.sendFile(fileToSend, "File Description");
+
+                                // Wait for the transfer to complete
+                                while (!transfer.isDone()) {
+                                    Thread.sleep(1000); // Add a delay to prevent high CPU usage
+                                }
+
+                                // Check if the transfer was successful
+                                if (transfer.getStatus() == FileTransfer.Status.complete) {
+                                    System.out.println("File transfer successful!");
+                                } else {
+                                    System.out.println("File transfer failed.");
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
