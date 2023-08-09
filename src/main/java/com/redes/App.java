@@ -22,7 +22,8 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.filetransfer.FileTransfer;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
 import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
-
+import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.vcardtemp.VCardManager;
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
 import org.jxmpp.jid.EntityBareJid;
@@ -120,7 +121,8 @@ public class App {
                         System.out.println();
                     }
                 });
-                System.out.println("Ingrese que hacer?\n1.Añadir Contacto");
+                System.out.println(
+                        "Ingrese que hacer?\n1.Añadir Contacto\n2. Ver listado de contactos.\n3Ver información de un usuario.\n4. Mandar mensaje.");
                 int input1 = input.nextInt();
                 if (input1 == 1) {
 
@@ -202,6 +204,18 @@ public class App {
                     // Keep the main thread waiting for user input
 
                 } else if (input1 == 5) {
+                    EntityBareJid roomJid = JidCreate.entityBareFrom("room@example.com");
+
+                    // Join the MUC room
+                    MultiUserChat muc = MultiUserChatManager.getInstanceFor(connection).getMultiUserChat(roomJid);
+                    muc.join(Resourcepart.from("your-nickname"));
+
+                    // Send a message to the room
+                    muc.sendMessage("Hello, this is a message from Smack!");
+
+                    // Leave the MUC room (optional)
+                    muc.leave();
+                } else if (input1 == 6) {
                     System.out.println(":)");
                     EntityBareJid recipientBareJid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
                     Collection<RosterEntry> rosterEntries = roster.getEntries();
