@@ -211,7 +211,10 @@ public class App {
                     EntityBareJid roomJid = JidCreate.entityBareFrom("testing@conference.alumchat.xyz");
                     MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
 
-                    Resourcepart nickname = Resourcepart.from("Roberto");
+                    input.nextLine();
+                    System.out.println("Ingrese un apodo para el grupo: ");
+                    String apodo = input.nextLine();
+                    Resourcepart nickname = Resourcepart.from(apodo);
                     muc.join(nickname);
                     // Set up message listener
                     muc.addMessageListener(new MessageListener() {
@@ -221,6 +224,7 @@ public class App {
                         }
                     });
 
+                    muc.sendMessage("Hello, this is my message!");
                     // Leave the room
                     while (true) {
                     }
