@@ -3,6 +3,7 @@ package com.redes;
 import java.io.File;
 import java.io.IOException;
 import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPException;
@@ -204,17 +205,25 @@ public class App {
                     // Keep the main thread waiting for user input
 
                 } else if (input1 == 5) {
-                    EntityBareJid roomJid = JidCreate.entityBareFrom("room@example.com");
+                    // Create a multi-user chat manager
+                    MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
-                    // Join the MUC room
-                    MultiUserChat muc = MultiUserChatManager.getInstanceFor(connection).getMultiUserChat(roomJid);
-                    muc.join(Resourcepart.from("your-nickname"));
+                    EntityBareJid roomJid = JidCreate.entityBareFrom("testing@conference.alumchat.xyz");
+                    MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
 
-                    // Send a message to the room
-                    muc.sendMessage("Hello, this is a message from Smack!");
+                    Resourcepart nickname = Resourcepart.from("Roberto");
+                    muc.join(nickname);
+                    // Set up message listener
+                    muc.addMessageListener(new MessageListener() {
+                        @Override
+                        public void processMessage(Message message) {
+                            System.out.println("Received message from " + message.getFrom() + ": " + message.getBody());
+                        }
+                    });
 
-                    // Leave the MUC room (optional)
-                    muc.leave();
+                    // Leave the room
+                    while (true) {
+                    }
                 } else if (input1 == 6) {
                     System.out.println(":)");
                     EntityBareJid recipientBareJid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
