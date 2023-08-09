@@ -45,6 +45,7 @@ import java.util.logging.Logger;
  *
  */
 public class App {
+
     public static void main(String[] args) throws XmppStringprepException, InterruptedException {
         Scanner input = new Scanner(System.in);
         String serverAddress = "alumchat.xyz";
@@ -87,6 +88,14 @@ public class App {
                 String password = input.nextLine();
                 connection.login(user, password);
                 ChatManager chatManager = ChatManager.getInstanceFor(connection);
+
+                Presence.Builder presenceBuilder = new Presence.Builder()
+                        .setType(Presence.Type.available)
+                        .setStatus("I am here!")
+                        .setPriority(1)
+                        .setMode(Presence.Mode.chat);
+
+                connection.sendStanza(presenceBuilder.build());
 
                 chatManager.addIncomingListener(new IncomingChatMessageListener() {
                     @Override
@@ -267,6 +276,8 @@ public class App {
                             }
                         }
                     }
+                } else if (input1 == 7) {
+
                 }
             }
 
