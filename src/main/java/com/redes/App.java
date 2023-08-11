@@ -89,18 +89,36 @@ public class App {
                 connection.login(user, password);
                 ChatManager chatManager = ChatManager.getInstanceFor(connection);
 
-                Presence.Builder presenceBuilder = new Presence.Builder()
-                        .setType(Presence.Type.available)
-                        .setStatus("I am here!")
-                        .setPriority(1)
-                        .setMode(Presence.Mode.chat);
-
-                connection.sendStanza(presenceBuilder.build());
-
                 chatManager.addIncomingListener(new IncomingChatMessageListener() {
                     @Override
                     public void newIncomingMessage(EntityBareJid from, Message message, Chat chat) {
-                        System.out.println("New message from " + from + ": " + message.getBody());
+
+                        if (message.getBody().startsWith("file://")) {
+                            String base64File = message.getBody().substring(7);
+                            String fileType = message.getBody().substring(7,
+                                    7 + base64File.indexOf("://"));
+                            base64File = base64File.substring(base64File.indexOf("://") + 3);
+
+                            System.out.println(base64File);
+                            System.out.println(fileType);
+
+                            byte[] file = java.util.Base64.getDecoder().decode(base64File);
+
+                            System.out.println("\nRecieved file from. " + fileType);
+
+                            File fileToSave = new File("recieved_file." + fileType);
+
+                            try {
+                                java.io.FileWriter fileWriter = new java.io.FileWriter(fileToSave);
+                                fileWriter.write(new String(file));
+                                fileWriter.close();
+                            } catch (Exception e) {
+                                System.out.println("Error: " + e.getMessage());
+                            }
+
+                        } else {
+                            System.out.println("New message from " + from + ": " + message.getBody());
+                        }
                     }
                 });
 
@@ -233,51 +251,54 @@ public class App {
                         }
                     });
 
-                    muc.sendMessage("Hello, this is my message!");
+                    int group = 0;
                     // Leave the room
-                    while (true) {
+                    while (group != 2) {
+                        if (group == 1) {
+                            System.out.println("Que quiere hacer?\n 1. Mandar un mensaje.\n2. Salir del grupo. ");
+                            muc.sendMessage("Hello, this is my message!");
+                        } else if (group == 2) {
+                            muc.leave();
+                        }
+
                     }
                 } else if (input1 == 6) {
-                    System.out.println(":)");
-                    EntityBareJid recipientBareJid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
-                    Collection<RosterEntry> rosterEntries = roster.getEntries();
-                    for (RosterEntry entry : rosterEntries) {
-                        System.out.print(entry.getJid());
-                        System.out.print("\n");
-                        System.out.println(entry.getJid().equals(recipientBareJid));
-                        if (entry.getJid().equals(recipientBareJid)) {
-                            Presence presence = roster.getPresence(entry.getJid());
-                            EntityFullJid resource = presence.getFrom().asEntityFullJidIfPossible();
-                            if (resource != null) {
-                                System.out.println(resource);
-                                // Create a FileTransferManager
-                                FileTransferManager transferManager = FileTransferManager.getInstanceFor(connection);
+                    System.out.println("Enter username");
+                    input.nextLine();
+                    String username = input.nextLine();
+                    System.out.println("Enter file path: ");
+                    String filePath = input.nextLine();
 
-                                // Create an OutgoingFileTransfer using the selected resource
-                                OutgoingFileTransfer transfer = transferManager.createOutgoingFileTransfer(resource);
+                    File file = new File(filePath);
 
-                                // Specify the file to send
-                                File fileToSend = new File("C:\\Users\\rober\\Look.txt");
+                    byte[] fileBytes = new byte[(int) file.length()];
 
-                                // Initiate the file transfer
-                                transfer.sendFile(fileToSend, "File Description");
-
-                                // Wait for the transfer to complete
-                                while (!transfer.isDone()) {
-                                    Thread.sleep(1000); // Add a delay to prevent high CPU usage
-                                }
-
-                                // Check if the transfer was successful
-                                if (transfer.getStatus() == FileTransfer.Status.complete) {
-                                    System.out.println("File transfer successful!");
-                                } else {
-                                    System.out.println("File transfer failed.");
-                                }
-                            }
-                        }
+                    try {
+                        java.io.FileInputStream fileInputStream = new java.io.FileInputStream(file);
+                        fileInputStream.read(fileBytes);
+                        fileInputStream.close();
+                    } catch (Exception e) {
+                        System.out.println("Error: " + e.getMessage());
                     }
-                } else if (input1 == 7) {
 
+                    String base64File = java.util.Base64.getEncoder().encodeToString(fileBytes);
+                    String fileType = filePath.substring(filePath.lastIndexOf(".") + 1);
+                    String message = "file://" + fileType + "://" + base64File;
+
+                    try {
+                        EntityBareJid userID = JidCreate.entityBareFrom(username + "@" + config.getXMPPServiceDomain());
+                        Chat chat = chatManager.chatWith(userID);
+                        chat.send(message);
+                    } catch (Exception e) {
+                        System.out.println("Error" + e.getMessage());
+                        return;
+                    }
+
+                    System.out.println("File sent succesfully");
+                } else if (input1 == 7) {
+                    Presence presence = new Presence(Presence.Type.available);
+                    presence.setMode(Presence.Mode.away); // You can set other modes like 'chat', 'dnd', etc.
+                    presence.setStatus("I'm away right now");
                 }
             }
 
