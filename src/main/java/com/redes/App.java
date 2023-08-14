@@ -2,6 +2,7 @@ package com.redes;
 
 import java.io.File;
 import java.io.IOException;
+import org.jivesoftware.smack.packet.PresenceBuilder;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.SmackException;
@@ -14,15 +15,19 @@ import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.chat2.IncomingChatMessageListener;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smack.util.XmlStringBuilder;
 import org.jivesoftware.smackx.filetransfer.FileTransfer;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
 import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
+import org.jivesoftware.smackx.iqregister.AccountManager;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.vcardtemp.VCardManager;
@@ -31,6 +36,7 @@ import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 import java.io.IOException;
@@ -79,6 +85,18 @@ public class App {
             int userName = input.nextInt();
             System.out.println(userName);
             if (userName == 1) {
+                AccountManager accountManager = AccountManager.getInstance(connection);
+                // User registration details
+                String username = "newuser";
+                String password = "password";
+                Localpart localpart = Localpart.from(username);
+
+                // Register the new user account
+                try {
+                    accountManager.createAccount(localpart, password);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
             } else if (userName == 2) {
                 System.out.println("Ingrese su usuario:");
@@ -143,9 +161,11 @@ public class App {
                     public void presenceChanged(Presence presence) {
                         Jid contactJid = presence.getFrom();
                         Presence.Type presenceType = presence.getType();
+                        String status = presence.getStatus();
                         System.out.println("Presence Changed:");
                         System.out.println(" - Contact JID: " + contactJid);
                         System.out.println(" - Presence Type: " + presenceType);
+                        System.out.println(" - Status Type: " + status);
                         System.out.println();
                     }
                 });
@@ -188,8 +208,11 @@ public class App {
                         }
                     });
 
-                    String newContactJID = "echobot@alumchat.xyz"; // Replace with the JID of the new contact
-                    String newContactName = "Echobot"; // Replace with the name of the new contact (optional)
+                    System.out.println("Ingrese el Usuario del Contacto!");
+                    input.nextLine();
+                    String newContactJID = input.nextLine() + "@alumchat.xyz";
+                    System.out.println("Ingrese el nombre del contacto del Contacto!");
+                    String newContactName = input.nextLine(); // Replace with the name of the new contact (optional)
 
                     EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
                     roster.createItemAndRequestSubscription(jid, newContactName, null);
@@ -200,14 +223,14 @@ public class App {
                     System.out.println("Ingrese el usuario");
                     input.nextLine();
                     String users = input.nextLine();
-                    user = users + "@alumchat.xyz";
+                    String use = users + "@alumchat.xyz";
                     EntityBareJid jid = JidCreate.entityBareFrom(users);
                     RosterEntry entry = roster.getEntry(jid);
 
                     System.out.println(entry);
                     if (entry != null) {
                         // Print the user's information
-                        System.out.println("User Information for: " + user);
+                        System.out.println("User Information for: " + use);
                         System.out.println("Email: " + entry.getJid());
                         System.out.println("JID: " + entry.getJid());
                         Presence presence = roster.getPresence(jid);
@@ -296,57 +319,34 @@ public class App {
 
                     System.out.println("File sent succesfully");
                 } else if (input1 == 7) {
-                    Presence presence = new Presence(Presence.Type.available);
-                    presence.setMode(Presence.Mode.away); // You can set other modes like 'chat', 'dnd', etc.
-                    presence.setStatus("I'm away right now");
+                    Presence.Mode[] presenceModes = Presence.Mode.values();
+                    System.out.println("Select presence mode:\n");
+                    for (int i = 1; i < presenceModes.length + 1; i++) {
+                        int option = input.nextInt() - 1;
+                        try {
+                            PresenceBuilder presenceBuilder = PresenceBuilder.buildPresence()
+                                    .setMode(presenceModes[option]);
+                            connection.sendStanza(presenceBuilder.build());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } else if (input1 == 8) {
+                    connection.disconnect();
                 }
-            }
 
-            /*
-             * String newContactJID = "echobot@alumchat.xyz"; // Replace with the JID of the
-             * new contact
-             * String newContactName = "Echobot"; // Replace with the name of the new
-             * contact (optional)
-             * 
-             * EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
-             * roster.createItemAndRequestSubscription(jid, newContactName, null);
-             * 
-             * 
-             * System.out.println("Contacts (Roster Entries):");
-             * System.out.println("Roster size: " + roster.getEntries().size());
-             * 
-             * for (RosterEntry entry : roster.getEntries()) {
-             * System.out.println("JID: " + entry.getJid());
-             * System.out.println("Name: " + entry.getName());
-             * System.out.println("Groups: ");
-             * for (RosterGroup group : entry.getGroups()) {
-             * System.out.println("- " + group.getName());
-             * }
-             * System.out.println("-------------------------");
-             * }
-             * /*
-             * String recipientJID = "";
-             * 
-             * // Create a chat session
-             * EntityBareJid jid = JidCreate.entityBareFrom("echobot@alumchat.xyz");
-             * Chat chat = chatManager.chatWith(jid);
-             * 
-             * // The message body
-             * 
-             * // Send the message
-             * chat.send("Hello!");
-             * 
-             * System.out.println("Message sent successfully.");
-             * 
-             * chatManager.addIncomingListener(new IncomingChatMessageListener() {
-             * 
-             * @Override
-             * public void newIncomingMessage(EntityBareJid from, Message message, Chat
-             * chat) {
-             * System.out.println("New message from " + from + ": " + message.getBody());
-             * }
-             * });
-             */
+            } else if (userName == 3) {
+                AccountManager accountManager = AccountManager.getInstance(connection);
+                System.out.println("Ingrese su usuario:");
+                input.nextLine();
+                String user = input.nextLine();
+                System.out.println("Ingrese su contraseña");
+                String password = input.nextLine();
+                connection.login(user, password);
+                accountManager.sensitiveOperationOverInsecureConnection(true);
+                accountManager.deleteAccount();
+                System.out.println("La cuenta ha sido borrada!");
+            }
 
             // User authenticated, perform your XMPP operations*/
         } catch (SmackException | XMPPException | IOException | NullPointerException e) {
