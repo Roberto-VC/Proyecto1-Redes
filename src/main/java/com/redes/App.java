@@ -144,6 +144,7 @@ public class App {
                 roster.addRosterListener(new RosterListener() {
                     @Override
                     public void entriesAdded(Collection<Jid> addresses) {
+                        System.out.println("Se ingreso un nuevo usuario!");
 
                     }
 
@@ -160,7 +161,7 @@ public class App {
                     @Override
                     public void presenceChanged(Presence presence) {
                         Jid contactJid = presence.getFrom();
-                        Presence.Type presenceType = presence.getType();
+                        Presence.Mode presenceType = presence.getMode();
                         String status = presence.getStatus();
                         System.out.println("Presence Changed:");
                         System.out.println(" - Contact JID: " + contactJid);
@@ -213,18 +214,26 @@ public class App {
                     String newContactJID = input.nextLine() + "@alumchat.xyz";
                     System.out.println("Ingrese el nombre del contacto del Contacto!");
                     String newContactName = input.nextLine(); // Replace with the name of the new contact (optional)
-
                     EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
                     roster.createItemAndRequestSubscription(jid, newContactName, null);
                 } else if (input1 == 2) {
-                    System.out.println("Roster size: " + roster.getEntries().size());
+                    roster.reloadAndWait();
+                    System.out.println("Contact List (Roster):");
+                    for (RosterEntry entry : roster.getEntries()) {
+                        if (entry.getName() == null) {
+                            System.out.println("Contact: " + entry.getJid() + " (" + entry.getJid() + ")");
+                        } else {
+                            System.out.println("Contact: " + entry.getName() + " (" + entry.getJid() + ")");
+                        }
+
+                    }
                 } else if (input1 == 3) {
 
                     System.out.println("Ingrese el usuario");
                     input.nextLine();
                     String users = input.nextLine();
                     String use = users + "@alumchat.xyz";
-                    EntityBareJid jid = JidCreate.entityBareFrom(users);
+                    EntityBareJid jid = JidCreate.entityBareFrom(use);
                     RosterEntry entry = roster.getEntry(jid);
 
                     System.out.println(entry);
@@ -250,7 +259,9 @@ public class App {
                     users = users + "@alumchat.xyz";
                     EntityBareJid recipient = JidCreate.entityBareFrom(users);
                     Chat chat = chatManager.chatWith(recipient);
-                    chat.send("Hello, this is a test message!");
+                    System.out.println("Escriba el mensaje que mandar: ");
+                    String message = input.nextLine();
+                    chat.send(message);
 
                     // Keep the main thread waiting for user input
 
@@ -258,10 +269,12 @@ public class App {
                     // Create a multi-user chat manager
                     MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
-                    EntityBareJid roomJid = JidCreate.entityBareFrom("testing@conference.alumchat.xyz");
+                    System.out.println("Ingrese nombre del grupo: ");
+                    input.nextLine();
+                    String room = input.nextLine();
+                    EntityBareJid roomJid = JidCreate.entityBareFrom(room + "@conference.alumchat.xyz");
                     MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
 
-                    input.nextLine();
                     System.out.println("Ingrese un apodo para el grupo: ");
                     String apodo = input.nextLine();
                     Resourcepart nickname = Resourcepart.from(apodo);
@@ -319,18 +332,28 @@ public class App {
 
                     System.out.println("File sent succesfully");
                 } else if (input1 == 7) {
+                    input.nextLine();
                     Presence.Mode[] presenceModes = Presence.Mode.values();
                     System.out.println("Select presence mode:\n");
                     for (int i = 1; i < presenceModes.length + 1; i++) {
-                        int option = input.nextInt() - 1;
-                        try {
-                            PresenceBuilder presenceBuilder = PresenceBuilder.buildPresence()
-                                    .setMode(presenceModes[option]);
-                            connection.sendStanza(presenceBuilder.build());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        System.out.println(i + ". " + presenceModes[i - 1]);
+
                     }
+                    int option = input.nextInt() - 1;
+
+                    System.out.println("Ingrese su estado: ");
+                    input.nextLine();
+                    String status = input.nextLine();
+                    try {
+                        PresenceBuilder presenceBuilder = PresenceBuilder.buildPresence()
+                                .setMode(presenceModes[option])
+                                .setStatus(status);
+                        connection.sendStanza(presenceBuilder.build());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("Presencia ha sido actualizada!");
+
                 } else if (input1 == 8) {
                     connection.disconnect();
                 }
