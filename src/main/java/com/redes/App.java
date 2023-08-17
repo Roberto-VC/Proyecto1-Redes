@@ -3,6 +3,12 @@ package com.redes;
 //Importación de Librerías y Paquetes
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
 import org.jivesoftware.smack.packet.PresenceBuilder;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.MessageListener;
@@ -24,6 +30,7 @@ import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smack.util.SslContextFactory;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 import org.jivesoftware.smackx.filetransfer.FileTransfer;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
@@ -47,7 +54,48 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 public class App {
+    // Create an SSLContext that trusts all certificates (not recommended for
+    // production)
+
+    // getSslContextFacotry para poder realizar una conexión segura
+    // Esto permite crear cuenatas.
+    private static SslContextFactory getSslContextFactory() {
+        return () -> {
+            try {
+                final SSLContext result = SSLContext.getInstance("TLS");
+                result.init(null, new TrustManager[] { new DummyTrustManager() }, new SecureRandom());
+                return result;
+            } catch (Exception e) {
+                throw new RuntimeException("can't init SSL Context.", e);
+            }
+        };
+    }
+
+    private static class DummyTrustManager implements X509TrustManager {
+        public boolean isClientTrusted(X509Certificate[] cert) {
+            return true;
+        }
+
+        public boolean isServerTrusted(X509Certificate[] cert) {
+            return true;
+        }
+
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
+
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
+
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+        // Función para los certificados.
+    }
 
     public static void main(String[] args) throws XmppStringprepException, InterruptedException {
         Scanner input = new Scanner(System.in);
@@ -56,16 +104,19 @@ public class App {
         // Direcciones del servicio para conectarse.
         int serverPort = 5222; // Default XMPP port
 
+        System.setProperty("javax.net.ssl.trustStore", "keystore.jks");
+
         // COnfiguracipón para llamar al servicio. Se debe de conectar al host, al
         // doinio y el puero que es 5222.
         XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
                 .setHost(serverAddress)
                 .setXmppDomain(xmppServiceName)
                 .setPort(serverPort)
-                .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled) // You may need to adjust this based on
-                                                                                // your server's security settings
+                .setSecurityMode(ConnectionConfiguration.SecurityMode.required)
+                .setSslContextFactory(getSslContextFactory())
+                .setCustomX509TrustManager(new DummyTrustManager())
+                // your server's security settings
                 .setCompressionEnabled(false)
-                .setConnectTimeout(10000)
                 .build();
 
         XMPPTCPConnection connection = new XMPPTCPConnection(config);
@@ -79,10 +130,18 @@ public class App {
         // Revise que se haya conectado correctamente.
         System.out.println("Connection: " + connection);
         int userName = 0;
+        boolean log = false;
+        try {
+            log = true;
+            connection.connect();
+        } catch (Exception e) {
+            System.out.println("No se pudo contectar");
+            userName = 4;
+        }
         // Creación de menu.
         while (userName != 4) {
             try {
-                connection.connect();
+
                 // Se conecta la sesión, y pregunta si quiere crear cuenta, ingresar, o eliminar
                 // cuenta.
                 System.out.println("¿Qué desea hacer?\n1. Crear cuenta.\n2. Ingresar\n3. Eliminar cuenta.\n4Salir.");
@@ -90,6 +149,7 @@ public class App {
                 System.out.println(userName);
                 if (userName == 1) {
                     AccountManager accountManager = AccountManager.getInstance(connection);
+                    System.out.println(accountManager.supportsAccountCreation());
                     input.nextLine();
                     // Registro de Usuario
                     System.out.println("Ingrese el nombre del usuario");
@@ -107,6 +167,10 @@ public class App {
                     }
 
                 } else if (userName == 2) {
+                    if (log == false) {
+                        connection.connect();
+                        log = true;
+                    }
                     // Ingreso de usuario y contrasela
                     System.out.println("Ingrese su usuario:");
                     input.nextLine();
@@ -358,10 +422,18 @@ public class App {
 
                     } else if (input1 == 8) {
                         connection.disconnect();
+                        log = false;
                     }
 
                 } else if (userName == 3) {
                     // Se tiene el managaer para las cuentas.
+                    if (log = true) {
+                        connection.disconnect();
+                        log = false;
+                    } else {
+                        connection.connect();
+                    }
+                    connection.connect();
                     AccountManager accountManager = AccountManager.getInstance(connection);
                     System.out.println("Ingrese su usuario:");
                     input.nextLine();
@@ -370,10 +442,12 @@ public class App {
                     String password = input.nextLine();
                     // Se conecta. Desde la conexioón de adentro, se elimina la cuenta y todo
                     // termina.
+                    System.out.println("Pain");
                     connection.login(user, password);
                     accountManager.sensitiveOperationOverInsecureConnection(true);
                     accountManager.deleteAccount();
                     System.out.println("La cuenta ha sido borrada!");
+                    connection.disconnect();
                 }
 
                 // User authenticated, perform your XMPP operations*/
