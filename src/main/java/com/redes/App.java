@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
+import org.jivesoftware.smackx.ping.PingManager;
 import org.jivesoftware.smack.packet.PresenceBuilder;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.MessageListener;
@@ -120,6 +121,8 @@ public class App {
                 .build();
 
         XMPPTCPConnection connection = new XMPPTCPConnection(config);
+        PingManager pingManager = PingManager.getInstanceFor(connection);
+        pingManager.setPingInterval(1000);
         // Se crea la conexión con la configuración.
         Logger logger = Logger.getLogger(XMPPTCPConnection.class.getName());
         logger.setLevel(Level.ALL);
@@ -251,178 +254,188 @@ public class App {
                         }
                     });
                     // Menu cuando esta dentro del resrvidor.
-                    System.out.println(
-                            "Ingrese que hacer?\n1.Añadir Contacto\n2. Ver listado de contactos.\n3. Ver información de un usuario.\n4. Mandar mensaje.\n5. Unirse a un grupo. \n6. Mandar un archivo. \n7. Cambiar Presencia\n8.Desconectarse");
-                    int input1 = input.nextInt();
-                    if (input1 == 1) {
+                    int input1 = 0;
+                    while (input1 != 9) {
+                        System.out.println(
+                                "Ingrese que hacer?\n1.Añadir Contacto\n2. Ver listado de contactos.\n3. Ver información de un usuario.\n4. Mandar mensaje.\n5. Unirse a un grupo. \n6. Mandar un archivo. \n7. Cambiar Presencia\n8.Desconectarse");
+                        input1 = input.nextInt();
+                        if (input1 == 1) {
 
-                        System.out.println("Ingrese el Usuario del Contacto!");
-                        input.nextLine();
-                        // Pide al nuevo usuario. Se añade la dirección del servidor como el Jid
-                        String newContactJID = input.nextLine() + "@alumchat.xyz";
-                        System.out.println("Ingrese el nombre del contacto del Contacto!");
-                        String newContactName = input.nextLine(); // Se puede cambiar el nombre del usuario, o si no,
-                                                                  // queda como el Jud.
-                        EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
-                        if (newContactName == "" || newContactName == null) {
-                            newContactName = newContactJID;
-                        }
-                        // Crea el nuevo contacto respectivamente.
-                        roster.createItemAndRequestSubscription(jid, newContactName, null);
-                    } else if (input1 == 2) {
-                        roster.reloadAndWait();
-                        System.out.println("Contact List (Roster):");
-                        for (RosterEntry entry : roster.getEntries()) {
-                            if (entry.getName() == null) {
-                                System.out.println("Contact: " + entry.getJid() + " (" + entry.getJid() + ")");
+                            System.out.println("Ingrese el Usuario del Contacto!");
+                            input.nextLine();
+                            // Pide al nuevo usuario. Se añade la dirección del servidor como el Jid
+                            String newContactJID = input.nextLine() + "@alumchat.xyz";
+                            System.out.println("Ingrese el nombre del contacto del Contacto!");
+                            String newContactName = input.nextLine(); // Se puede cambiar el nombre del usuario, o si
+                                                                      // no,
+                                                                      // queda como el Jud.
+                            EntityBareJid jid = JidCreate.entityBareFrom(newContactJID);
+                            if (newContactName == "" || newContactName == null) {
+                                newContactName = newContactJID;
+                            }
+                            // Crea el nuevo contacto respectivamente.
+                            roster.createItemAndRequestSubscription(jid, newContactName, null);
+                        } else if (input1 == 2) {
+                            System.out.println("Contact List (Roster):");
+                            for (RosterEntry entry : roster.getEntries()) {
+                                if (entry.getName() == null) {
+                                    System.out.println("Contact: " + entry.getJid() + " (" + entry.getJid() + ")");
+                                } else {
+                                    System.out.println("Contact: " + entry.getName() + " (" + entry.getJid() + ")");
+                                }
+
+                            }
+                        } else if (input1 == 3) {
+
+                            System.out.println("Ingrese el usuario");
+                            input.nextLine();
+                            String users = input.nextLine();
+                            // Pide al usuario que buscar.
+                            String use = users + "@alumchat.xyz";
+                            EntityBareJid jid = JidCreate.entityBareFrom(use);
+                            RosterEntry entry = roster.getEntry(jid);
+                            // Busca en el rooster si esta el usuario.
+
+                            if (entry != null) {
+                                // PImprime la información del usuario, y muesrra si esta online u offline.
+                                System.out.println("User Information for: " + entry.getName());
+                                System.out.println("Email: " + entry.getJid());
+                                System.out.println("JID: " + entry.getJid());
+                                Presence presence = roster.getPresence(jid);
+                                if (presence.isAvailable()) {
+                                    System.out.println("Online");
+                                } else {
+                                    System.out.println("Offline");
+                                }
+                                ;
                             } else {
-                                System.out.println("Contact: " + entry.getName() + " (" + entry.getJid() + ")");
+                                // Muestra la info del usuario. Si no, no muestra nada.
+                                System.out.println("Usuario no se encuentra.");
                             }
-
-                        }
-                    } else if (input1 == 3) {
-
-                        System.out.println("Ingrese el usuario");
-                        input.nextLine();
-                        String users = input.nextLine();
-                        // Pide al usuario que buscar.
-                        String use = users + "@alumchat.xyz";
-                        EntityBareJid jid = JidCreate.entityBareFrom(use);
-                        RosterEntry entry = roster.getEntry(jid);
-                        // Busca en el rooster si esta el usuario.
-
-                        System.out.println(entry);
-                        if (entry != null) {
-                            // PImprime la información del usuario, y muesrra si esta online u offline.
-                            System.out.println("User Information for: " + use);
-                            System.out.println("Email: " + entry.getJid());
-                            System.out.println("JID: " + entry.getJid());
-                            Presence presence = roster.getPresence(jid);
-                            if (presence.isAvailable()) {
-                                System.out.println("Online");
-                            } else {
-                                System.out.println("Offline");
-                            }
-                            ;
-                        } else {
-                            // Muestra la info del usuario. Si no, no muestra nada.
-                            System.out.println("Usuario no se encuentra.");
-                        }
-                    } else if (input1 == 4) {
-                        // Pid einformación al usuario
-                        System.out.println("Ingrese el usuario");
-                        input.nextLine();
-                        String users = input.nextLine();
-                        users = users + "@alumchat.xyz";
-                        EntityBareJid recipient = JidCreate.entityBareFrom(users);
-                        Chat chat = chatManager.chatWith(recipient);
-                        System.out.println("Escriba el mensaje que mandar: ");
-                        String message = input.nextLine();
-                        chat.send(message);
-
-                        // A ese usuario, le pide la información de que quiere mandar, y después, manda
-                        // la información.
-
-                    } else if (input1 == 5) {
-                        // Creación de un manager de multiples personas, o de grupo
-                        MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
-                        // Pide el nombre del grupo a cual unirse.
-                        System.out.println("Ingrese nombre del grupo: ");
-                        input.nextLine();
-                        String room = input.nextLine();
-                        // Crea el Jid del grupo. Se utiliza @conference para esto.
-                        EntityBareJid roomJid = JidCreate.entityBareFrom(room + "@conference.alumchat.xyz");
-                        MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
-                        // Get MultiUser chat para crear un grupo, o para también tener el grupo
-                        // respecto.
-                        System.out.println("Ingrese un apodo para el grupo: ");
-                        String apodo = input.nextLine();
-                        Resourcepart nickname = Resourcepart.from(apodo);
-                        muc.join(nickname);
-                        // Recurso para poder mandar al grupo. Después de une.
-                        muc.addMessageListener(new MessageListener() {
-                            @Override
-                            public void processMessage(Message message) {
-                                System.out.println(
-                                        "Received message from " + message.getFrom() + ": " + message.getBody());
-                            }
-                        });
-                        // Manager para recibir mensajes del grupo.
-                        int group = 0;
-                        // Menu de que hacer en el grupo.
-                        while (group != 2) {
-                            System.out.println("Que quiere hacer?\n 1. Mandar un mensaje.\n2. Salir del grupo. ");
-                            group = input.nextInt();
-                            if (group == 1) {
-                                input.nextLine();
-                                System.out.println("Escriba el mensaje que euire mandar: ");
-                                String message = input.nextLine();
-                                muc.sendMessage(message);
-                            } else if (group == 2) {
-                                muc.leave();
-                            }
-                            // Opción de mandar mensaje el grupo, o de salir del grupo respectivamente.
-                        }
-                    } else if (input1 == 6) {
-                        System.out.println("Ingrese el usuario.");
-                        input.nextLine();
-                        String username = input.nextLine();
-                        System.out.println("Ingrese dirección del archivo: ");
-                        String filePath = input.nextLine();
-
-                        File file = new File(filePath);
-
-                        byte[] fileBytes = new byte[(int) file.length()];
-
-                        try {
-                            java.io.FileInputStream fileInputStream = new java.io.FileInputStream(file);
-                            fileInputStream.read(fileBytes);
-                            fileInputStream.close();
-                        } catch (Exception e) {
-                            System.out.println("Error: " + e.getMessage());
-                        }
-
-                        String base64File = java.util.Base64.getEncoder().encodeToString(fileBytes);
-                        String fileType = filePath.substring(filePath.lastIndexOf(".") + 1);
-                        String message = "file://" + fileType + "://" + base64File;
-
-                        try {
-                            EntityBareJid userID = JidCreate
-                                    .entityBareFrom(username + "@" + config.getXMPPServiceDomain());
-                            Chat chat = chatManager.chatWith(userID);
+                        } else if (input1 == 4) {
+                            // Pid einformación al usuario
+                            System.out.println("Ingrese el usuario");
+                            input.nextLine();
+                            String users = input.nextLine();
+                            users = users + "@alumchat.xyz";
+                            EntityBareJid recipient = JidCreate.entityBareFrom(users);
+                            Chat chat = chatManager.chatWith(recipient);
+                            System.out.println("Escriba el mensaje que mandar: ");
+                            String message = input.nextLine();
                             chat.send(message);
-                        } catch (Exception e) {
-                            System.out.println("Error" + e.getMessage());
-                            return;
+
+                            // A ese usuario, le pide la información de que quiere mandar, y después, manda
+                            // la información.
+
+                        } else if (input1 == 5) {
+                            // Creación de un manager de multiples personas, o de grupo
+                            MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
+                            // Pide el nombre del grupo a cual unirse.
+                            System.out.println("Ingrese nombre del grupo: ");
+                            input.nextLine();
+                            String room = input.nextLine();
+                            // Crea el Jid del grupo. Se utiliza @conference para esto.
+                            EntityBareJid roomJid = JidCreate.entityBareFrom(room + "@conference.alumchat.xyz");
+                            MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
+                            // Get MultiUser chat para crear un grupo, o para también tener el grupo
+                            // respecto.
+                            System.out.println("Ingrese un apodo para el grupo: ");
+                            String apodo = input.nextLine();
+                            Resourcepart nickname = Resourcepart.from(apodo);
+                            muc.join(nickname);
+                            // Recurso para poder mandar al grupo. Después de une.
+                            muc.addMessageListener(new MessageListener() {
+                                @Override
+                                public void processMessage(Message message) {
+                                    System.out.println(
+                                            "Received message from " + message.getFrom() + ": " + message.getBody());
+                                }
+                            });
+                            System.out.println("Se ha unido al group!");
+                        } else if (input1 == 6) {
+                            // Manager para recibir mensajes del grupo.
+                            int group = 0;
+                            // Menu de que hacer en el grupo.
+                            while (group != 2) {
+                                MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
+                                System.out.println("Que quiere hacer?\n 1. Mandar un mensaje.\n2. Salir del grupo. ");
+                                group = input.nextInt();
+                                if (group == 1) {
+                                    input.nextLine();
+
+                                    System.out.print("Ingrese el nombre del grupo: ");
+                                    String room = input.nextLine();
+                                    System.out.println("Escriba el mensaje que queire mandar: ");
+                                    String message = input.nextLine();
+                                    EntityBareJid roomJid = JidCreate.entityBareFrom(room + "@conference.alumchat.xyz");
+                                    MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
+                                    muc.sendMessage(message);
+                                } else if (group == 2) {
+                                    System.out.println("Volviendo al menu.");
+                                }
+                                // Opción de mandar mensaje el grupo, o de salir del grupo respectivamente.
+                            }
+                        } else if (input1 == 7) {
+                            System.out.println("Ingrese el usuario.");
+                            input.nextLine();
+                            String username = input.nextLine();
+                            System.out.println("Ingrese dirección del archivo: ");
+                            String filePath = input.nextLine();
+
+                            File file = new File(filePath);
+
+                            byte[] fileBytes = new byte[(int) file.length()];
+
+                            try {
+                                java.io.FileInputStream fileInputStream = new java.io.FileInputStream(file);
+                                fileInputStream.read(fileBytes);
+                                fileInputStream.close();
+                            } catch (Exception e) {
+                                System.out.println("Error: " + e.getMessage());
+                            }
+
+                            String base64File = java.util.Base64.getEncoder().encodeToString(fileBytes);
+                            String fileType = filePath.substring(filePath.lastIndexOf(".") + 1);
+                            String message = "file://" + fileType + "://" + base64File;
+
+                            try {
+                                EntityBareJid userID = JidCreate
+                                        .entityBareFrom(username + "@" + config.getXMPPServiceDomain());
+                                Chat chat = chatManager.chatWith(userID);
+                                chat.send(message);
+                            } catch (Exception e) {
+                                System.out.println("Error" + e.getMessage());
+                                return;
+                            }
+
+                            System.out.println("File sent succesfully");
+                        } else if (input1 == 8) {
+                            input.nextLine();
+                            Presence.Mode[] presenceModes = Presence.Mode.values();
+                            System.out.println("Select presence mode:\n");
+                            for (int i = 1; i < presenceModes.length + 1; i++) {
+                                System.out.println(i + ". " + presenceModes[i - 1]);
+
+                            }
+                            int option = input.nextInt() - 1;
+
+                            System.out.println("Ingrese su estado: ");
+                            input.nextLine();
+                            String status = input.nextLine();
+                            try {
+                                PresenceBuilder presenceBuilder = PresenceBuilder.buildPresence()
+                                        .setMode(presenceModes[option])
+                                        .setStatus(status);
+                                connection.sendStanza(presenceBuilder.build());
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            System.out.println("Presencia ha sido actualizada!");
+
+                        } else if (input1 == 9) {
+                            connection.disconnect();
+                            log = false;
                         }
-
-                        System.out.println("File sent succesfully");
-                    } else if (input1 == 7) {
-                        input.nextLine();
-                        Presence.Mode[] presenceModes = Presence.Mode.values();
-                        System.out.println("Select presence mode:\n");
-                        for (int i = 1; i < presenceModes.length + 1; i++) {
-                            System.out.println(i + ". " + presenceModes[i - 1]);
-
-                        }
-                        int option = input.nextInt() - 1;
-
-                        System.out.println("Ingrese su estado: ");
-                        input.nextLine();
-                        String status = input.nextLine();
-                        try {
-                            PresenceBuilder presenceBuilder = PresenceBuilder.buildPresence()
-                                    .setMode(presenceModes[option])
-                                    .setStatus(status);
-                            connection.sendStanza(presenceBuilder.build());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        System.out.println("Presencia ha sido actualizada!");
-
-                    } else if (input1 == 8) {
-                        connection.disconnect();
-                        log = false;
                     }
 
                 } else if (userName == 3) {
