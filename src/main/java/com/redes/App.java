@@ -33,6 +33,7 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.SslContextFactory;
 import org.jivesoftware.smack.util.XmlStringBuilder;
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.filetransfer.FileTransfer;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
 import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
@@ -336,8 +337,23 @@ public class App {
                             String room = input.nextLine();
                             // Crea el Jid del grupo. Se utiliza @conference para esto.
                             EntityBareJid roomJid = JidCreate.entityBareFrom(room + "@conference.alumchat.xyz");
+                            ServiceDiscoveryManager discoManager = ServiceDiscoveryManager.getInstanceFor(connection);
                             MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
                             // Get MultiUser chat para crear un grupo, o para también tener el grupo
+                            try {
+                                discoManager.discoverInfo(roomJid);
+                                System.out.println("Se encontro grupo: " + roomJid);
+                            } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException
+                                    | SmackException.NotConnectedException e) {
+                                System.out.println("No se encontro grupo: " + roomJid);
+
+                                Resourcepart nickname = Resourcepart.from(room);
+                                muc.create(nickname);
+
+                                System.out.println("Group chat room created: " + muc.getRoom());
+
+                            }
+
                             // respecto.
                             System.out.println("Ingrese un apodo para el grupo: ");
                             String apodo = input.nextLine();
