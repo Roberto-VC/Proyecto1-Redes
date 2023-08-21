@@ -147,7 +147,7 @@ public class App {
 
                 // Se conecta la sesión, y pregunta si quiere crear cuenta, ingresar, o eliminar
                 // cuenta.
-                System.out.println("¿Qué desea hacer?\n1. Crear cuenta.\n2. Ingresar\n3. Eliminar cuenta.\n4Salir.");
+                System.out.println("¿Qué desea hacer?\n1. Crear cuenta.\n2. Ingresar\n3. Eliminar cuenta.\n4. Salir.");
                 userName = input.nextInt();
                 System.out.println(userName);
                 if (userName == 1) {
@@ -257,7 +257,7 @@ public class App {
                     int input1 = 0;
                     while (input1 != 9) {
                         System.out.println(
-                                "Ingrese que hacer?\n1.Añadir Contacto\n2. Ver listado de contactos.\n3. Ver información de un usuario.\n4. Mandar mensaje.\n5. Unirse a un grupo. \n6. Mandar un archivo. \n7. Cambiar Presencia\n8.Desconectarse");
+                                "Ingrese que hacer?\n1. Añadir Contacto\n2. Ver listado de contactos.\n3. Ver información de un usuario.\n4. Mandar mensaje.\n5. Unirse a un grupo.\n6. Mandar mensaje a un grupo. \n7. Mandar un archivo. \n8. Cambiar Presencia\n9. Desconectarse");
                         input1 = input.nextInt();
                         if (input1 == 1) {
 
@@ -381,21 +381,23 @@ public class App {
                             String username = input.nextLine();
                             System.out.println("Ingrese dirección del archivo: ");
                             String filePath = input.nextLine();
-
+                            // Pide el usuario y la dirección del archivo a donde enviar.
                             File file = new File(filePath);
 
                             byte[] fileBytes = new byte[(int) file.length()];
-
+                            // En un array de dates, se escribe que tan grande es el archivo.
                             try {
+                                // Try catch en caso que no pueda leer el archivo.
                                 java.io.FileInputStream fileInputStream = new java.io.FileInputStream(file);
                                 fileInputStream.read(fileBytes);
                                 fileInputStream.close();
                             } catch (Exception e) {
                                 System.out.println("Error: " + e.getMessage());
                             }
-
+                            // Enconding para leerlo en base64 File
                             String base64File = java.util.Base64.getEncoder().encodeToString(fileBytes);
                             String fileType = filePath.substring(filePath.lastIndexOf(".") + 1);
+                            // Escribe el susbtring y al mandarlo, lo devuelve en un file.
                             String message = "file://" + fileType + "://" + base64File;
 
                             try {
@@ -407,10 +409,12 @@ public class App {
                                 System.out.println("Error" + e.getMessage());
                                 return;
                             }
+                            // Try catch para cuando manda el archivo.
 
                             System.out.println("File sent succesfully");
                         } else if (input1 == 8) {
                             input.nextLine();
+                            // Opciones de presencia.
                             Presence.Mode[] presenceModes = Presence.Mode.values();
                             System.out.println("Select presence mode:\n");
                             for (int i = 1; i < presenceModes.length + 1; i++) {
@@ -418,10 +422,11 @@ public class App {
 
                             }
                             int option = input.nextInt() - 1;
-
+                            // String para ingresar el estado del usuario.
                             System.out.println("Ingrese su estado: ");
                             input.nextLine();
                             String status = input.nextLine();
+                            // Creación de Presencia basado en lo anterior.
                             try {
                                 PresenceBuilder presenceBuilder = PresenceBuilder.buildPresence()
                                         .setMode(presenceModes[option])
@@ -430,9 +435,11 @@ public class App {
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
+                            // Presencia actualizada
                             System.out.println("Presencia ha sido actualizada!");
 
                         } else if (input1 == 9) {
+                            // Desconectar y salir.
                             connection.disconnect();
                             log = false;
                         }
