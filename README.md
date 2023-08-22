@@ -8,6 +8,7 @@ Proyecto 1 de Redes
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Features](#features)
+- [Instructions](#instructions)
 
 ## Getting Started
 
@@ -58,3 +59,7 @@ java -cp target/App.jar
 - [x] Define Presence Message
 - [x] Send/Recieve Notifiactions
 - [x] Send/Recieve Fiesl
+
+## Instructions
+
+First you muy follow the isntructions to compile, build and execute the program. After that you will find the menu to create an account, delete and account and log in. You must have an active account in order to log in, and you must create an accoutn that doesn't exist as well. After that's done and you log in, you will get different menus for options. For the options of adding an user, you must know the username to do. Likewise for sending the messages to that user, where you must be to a contact, you can't simply send a random message. Likewise, for a group, you must join a group each time you connect. If you aren't part of the group, you can write messages, but they not be recieved. For the presence messages, you can modify them from another menu. Finally, when you send messages, you need to write the entire direction of the file, in order to work and for that to be sent properly as well. 
