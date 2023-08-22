@@ -7,7 +7,7 @@ Proyecto 1 de Redes
 - [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Features](#Features)
+- [Features](#features)
 
 ## Getting Started
 
@@ -24,8 +24,18 @@ This is Project #1 for my Networking Class in UVG. In this proyect, we utilize a
 ```bash
 git clone https://github.com/Roberto-VC/Proyecto1-Redes.git
 cd Proyecto1-Redes
+### Install dependencies
 mvn clean package
-java -jar target/Java.jar
+
+mvn compile
+
+mvn exec:java
+
+mvn package
+
+### Run .jar
+java -jar target/App.jar
+java -cp target/App.jar
 
 ```
 
