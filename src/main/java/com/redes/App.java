@@ -207,7 +207,7 @@ public class App {
                                 // Decodifica el archivo, en bytes.
                                 byte[] file = java.util.Base64.getDecoder().decode(base64File);
 
-                                System.out.println("\nRecieved file from. " + fileType);
+                                System.out.println("\nArchivo recibido de: " + fileType);
 
                                 File fileToSave = new File("recieved_file." + fileType);
 
@@ -222,7 +222,7 @@ public class App {
 
                             } else {
                                 // Si solo es un mensaje cualquiera, manda la info de este mensaje.
-                                System.out.println("New message from " + from + ": " + message.getBody());
+                                System.out.println("Nuevo mensaje de " + from + ": " + message.getBody());
                             }
                         }
                     });
@@ -252,10 +252,10 @@ public class App {
                             Jid contactJid = presence.getFrom();
                             Presence.Mode presenceType = presence.getMode();
                             String status = presence.getStatus();
-                            System.out.println("Presence Changed:");
+                            System.out.println("Presencia Cambiada:");
                             System.out.println(" - Contact JID: " + contactJid);
-                            System.out.println(" - Presence Type: " + presenceType);
-                            System.out.println(" - Status Type: " + status);
+                            System.out.println(" - Tipo de Presencia: " + presenceType);
+                            System.out.println(" - Tipo de Estado: " + status);
                             System.out.println();
                         }
                     });
@@ -282,12 +282,12 @@ public class App {
                             // Crea el nuevo contacto respectivamente.
                             roster.createItemAndRequestSubscription(jid, newContactName, null);
                         } else if (input1 == 2) {
-                            System.out.println("Contact List (Roster):");
+                            System.out.println("Lista de Contactos (Roster):");
                             for (RosterEntry entry : roster.getEntries()) {
                                 if (entry.getName() == null) {
-                                    System.out.println("Contact: " + entry.getJid() + " (" + entry.getJid() + ")");
+                                    System.out.println("Contacto: " + entry.getJid() + " (" + entry.getJid() + ")");
                                 } else {
-                                    System.out.println("Contact: " + entry.getName() + " (" + entry.getJid() + ")");
+                                    System.out.println("Contacto: " + entry.getName() + " (" + entry.getJid() + ")");
                                 }
 
                             }
@@ -303,8 +303,12 @@ public class App {
                             // Busca en el rooster si esta el usuario.
 
                             if (entry != null) {
-                                // PImprime la información del usuario, y muesrra si esta online u offline.
-                                System.out.println("User Information for: " + entry.getName());
+                                // Imprime la información del usuario, y muesrra si esta online u offline.
+                                if (entry.getName() == null) {
+                                    System.out.println("Información de Usuario: " + entry.getJid());
+                                } else {
+                                    System.out.println("Información de Usuario: " + entry.getName());
+                                }
                                 System.out.println("Email: " + entry.getJid());
                                 System.out.println("JID: " + entry.getJid());
                                 Presence presence = roster.getPresence(jid);
@@ -375,17 +379,25 @@ public class App {
                             muc.addMessageListener(new MessageListener() {
                                 @Override
                                 public void processMessage(Message message) {
-                                    EntityFullJid roomJid;
                                     try {
+                                        EntityFullJid roomJid;
                                         roomJid = JidCreate
                                                 .entityFullFrom(room + "@conference.alumchat.xyz/" + apodo);
-                                        if (!roomJid.equals(message.getFrom()))
+
+                                        // Solo para que no reciba mensajes míos.
+                                        // if (!roomJid.equals(message.getFrom()))
+                                        if (message.getBody() == null) {
+                                            System.out.println("------------------------------------------");
+                                        } else {
                                             System.out.println(
                                                     "Received message from " + message.getFrom() + ": "
                                                             + message.getBody());
+                                        }
+
                                     } catch (XmppStringprepException e) {
                                         // TODO Auto-generated catch block
-                                        e.printStackTrace();
+                                        System.out.println("Error,  al crear el jid.");
+                                        ;
                                     }
 
                                 }
@@ -409,13 +421,14 @@ public class App {
                                             .getInstanceFor(connection);
                                     MultiUserChat muc = mucManager.getMultiUserChat(roomJid);
                                     // Get MultiUser chat para crear un grupo, o para también tener el grupo
+                                    // Try catch si se encuentra o grupo, o so, no lo realiza.
                                     try {
                                         discoManager.discoverInfo(roomJid);
                                         System.out.println("Se encontro grupo: " + roomJid);
                                         System.out.println("Escriba el mensaje que queire mandar: ");
                                         String message = input.nextLine();
-
                                         muc.sendMessage(message);
+                                        // En el caso que no sea parte del grupo, no manda los mensajes.
                                     } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException
                                             | SmackException.NotConnectedException e) {
                                         System.out.println("No se encontro grupo: " + roomJid);
@@ -525,11 +538,11 @@ public class App {
                 // User authenticated, perform your XMPP operations*/
             } catch (SmackException | XMPPException | IOException | NullPointerException e) {
                 e.printStackTrace();
-                System.out.println("Connection failed. Check for any errors.");
+                System.out.println("Conexión fallida. Intente de nuevo.");
 
                 // Si ocurren orresres, muestra que hubo en un problema en la conexión.
             }
         }
-
+        input.close();
     }
 }
