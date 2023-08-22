@@ -10,7 +10,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import org.jivesoftware.smackx.ping.PingManager;
-import org.jivesoftware.smackx.pubsub.Affiliation;
 import org.jivesoftware.smack.packet.PresenceBuilder;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.MessageListener;
@@ -18,7 +17,6 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
-import org.jivesoftware.smack.chat.ChatMessageListener;
 import org.jivesoftware.smack.chat2.Chat;
 import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.chat2.IncomingChatMessageListener;
@@ -44,8 +42,7 @@ import org.jivesoftware.smackx.muc.MUCRole;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muc.Occupant;
-import org.jivesoftware.smackx.vcardtemp.VCardManager;
-import org.jivesoftware.smackx.vcardtemp.packet.VCard;
+
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
@@ -54,7 +51,11 @@ import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -157,7 +158,6 @@ public class App {
                 System.out.println(userName);
                 if (userName == 1) {
                     AccountManager accountManager = AccountManager.getInstance(connection);
-                    System.out.println(accountManager.supportsAccountCreation());
                     input.nextLine();
                     // Registro de Usuario
                     System.out.println("Ingrese el nombre del usuario");
@@ -190,47 +190,50 @@ public class App {
                     connection.login(user, password, resource);
                     // Chat Manager, para poder mandar y recibir mensajes.
                     ChatManager chatManager = ChatManager.getInstanceFor(connection);
+                    // Creación de un manager de multiples personas, o de grupo
+                    MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
+                    // Array de Listeners para guardar la info, y después mandarla.
+                    Map<String, MessageListener> groupListeners = new HashMap<>();
+                    List<IncomingChatMessageListener> chatMessageListeners = new ArrayList<>();
+                    IncomingChatMessageListener incomingListener = (from, message, chat) -> {
+                        if (message.getBody().startsWith("file://")) {
+                            // Contenido del archivo, y también formate del archivo ginal.también quien
+                            // mando el archivo y su contenido
+                            String base64File = message.getBody().substring(7);
+                            String fileType = message.getBody().substring(7,
+                                    7 + base64File.indexOf("://"));
+                            base64File = base64File.substring(base64File.indexOf("://") + 3);
+
+                            // Decodifica el archivo, en bytes.
+                            byte[] file = java.util.Base64.getDecoder().decode(base64File);
+
+                            System.out.println("\nArchivo recibido de: " + from);
+
+                            File fileToSave = new File("recieved_file." + fileType);
+
+                            try {
+                                // Escribe el archivo y lo guarda ahí mismo.
+                                java.io.FileWriter fileWriter = new java.io.FileWriter(fileToSave);
+                                fileWriter.write(new String(file));
+                                fileWriter.close();
+                            } catch (Exception e) {
+                                System.out.println("Error: " + e.getMessage());
+                            }
+
+                        } else {
+                            // Si solo es un mensaje cualquiera, manda la info de este mensaje.
+                            System.out.println("Nuevo mensaje de " + from + ": " + message.getBody());
+                        }
+                    };
 
                     // Listener para manejar mensajes
-                    chatManager.addIncomingListener(new IncomingChatMessageListener() {
-                        @Override
-                        public void newIncomingMessage(EntityBareJid from, Message message, Chat chat) {
-                            // En el caso que se recibe un mensaje, recibe la inforamción de dicho mensaje.
-                            if (message.getBody().startsWith("file://")) {
-                                // Contenido del archivo, y también formate del archivo ginal.también quien
-                                // mando el archivo y su contenido
-                                String base64File = message.getBody().substring(7);
-                                String fileType = message.getBody().substring(7,
-                                        7 + base64File.indexOf("://"));
-                                base64File = base64File.substring(base64File.indexOf("://") + 3);
-
-                                // Decodifica el archivo, en bytes.
-                                byte[] file = java.util.Base64.getDecoder().decode(base64File);
-
-                                System.out.println("\nArchivo recibido de: " + fileType);
-
-                                File fileToSave = new File("recieved_file." + fileType);
-
-                                try {
-                                    // Escribe el archivo y lo guarda ahí mismo.
-                                    java.io.FileWriter fileWriter = new java.io.FileWriter(fileToSave);
-                                    fileWriter.write(new String(file));
-                                    fileWriter.close();
-                                } catch (Exception e) {
-                                    System.out.println("Error: " + e.getMessage());
-                                }
-
-                            } else {
-                                // Si solo es un mensaje cualquiera, manda la info de este mensaje.
-                                System.out.println("Nuevo mensaje de " + from + ": " + message.getBody());
-                            }
-                        }
-                    });
+                    chatMessageListeners.add(incomingListener);
+                    // También se guarda en el array de Listeners
+                    chatManager.addIncomingListener(incomingListener);
                     // Para todos los contactos que se tiene, se tiene un manager para esto.
+                    List<RosterListener> RosterListeners = new ArrayList<>();
                     Roster roster = Roster.getInstanceFor(connection);
-                    // El rooster listener tiene en cuenta cuando se añade un nuevo usuario, update,
-                    // borra, o cuando el contacto cambia su presencia.
-                    roster.addRosterListener(new RosterListener() {
+                    RosterListener rosterListener = new RosterListener() {
                         @Override
                         public void entriesAdded(Collection<Jid> addresses) {
                             System.out.println("Se ingreso un nuevo usuario!");
@@ -258,7 +261,9 @@ public class App {
                             System.out.println(" - Tipo de Estado: " + status);
                             System.out.println();
                         }
-                    });
+                    };
+                    roster.addRosterListener(rosterListener);
+                    RosterListeners.add(rosterListener);
                     // Menu cuando esta dentro del resrvidor.
                     int input1 = 0;
                     while (input1 != 9) {
@@ -338,8 +343,7 @@ public class App {
                             // la información.
 
                         } else if (input1 == 5) {
-                            // Creación de un manager de multiples personas, o de grupo
-                            MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
+
                             // Pide el nombre del grupo a cual unirse.
 
                             input.nextLine();
@@ -376,7 +380,7 @@ public class App {
 
                             muc.join(nickname);
                             // Recurso para poder mandar al grupo. Después de une.
-                            muc.addMessageListener(new MessageListener() {
+                            MessageListener grouplistener = new MessageListener() {
                                 @Override
                                 public void processMessage(Message message) {
                                     try {
@@ -385,12 +389,13 @@ public class App {
                                                 .entityFullFrom(room + "@conference.alumchat.xyz/" + apodo);
 
                                         // Solo para que no reciba mensajes míos.
-                                        // if (!roomJid.equals(message.getFrom()))
+                                        // (!roomJid.equals(message.getFrom()))
                                         if (message.getBody() == null) {
-                                            System.out.println("------------------------------------------");
+                                            System.out.println(
+                                                    "---------------------------------------------------------------------------");
                                         } else {
                                             System.out.println(
-                                                    "Received message from " + message.getFrom() + ": "
+                                                    "Mensaje recibido de " + message.getFrom() + ": "
                                                             + message.getBody());
                                         }
 
@@ -401,14 +406,15 @@ public class App {
                                     }
 
                                 }
-                            });
+                            };
+                            muc.addMessageListener(grouplistener);
+                            groupListeners.put(room, grouplistener);
                             System.out.println("Se ha unido al group!");
                         } else if (input1 == 6) {
                             // Manager para recibir mensajes del grupo.
                             int group = 0;
                             // Menu de que hacer en el grupo.
                             while (group != 2) {
-                                MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
                                 System.out.println("Que quiere hacer?\n1. Mandar un mensaje.\n2. Salir del grupo. ");
                                 group = input.nextInt();
                                 if (group == 1) {
@@ -504,6 +510,22 @@ public class App {
                             System.out.println("Presencia ha sido actualizada!");
 
                         } else if (input1 == 9) {
+                            // Desconectar todos los listeners para que no haya problemas respectivos de
+                            // múltiples instancias.
+                            for (IncomingChatMessageListener listener : chatMessageListeners) {
+                                chatManager.removeIncomingListener(listener);
+                            }
+                            chatMessageListeners.clear();
+                            for (RosterListener listener : RosterListeners) {
+                                roster.removeRosterListener(listener);
+                            }
+                            RosterListeners.clear();
+                            for (String groupJid : groupListeners.keySet()) {
+                                EntityBareJid groupToRemove = JidCreate
+                                        .entityBareFrom(groupJid + "@conference.alumchat.xyz");
+                                MultiUserChat chats = mucManager.getMultiUserChat(groupToRemove);
+                                chats.removeMessageListener(groupListeners.get(groupJid));
+                            }
                             // Desconectar y salir.
                             connection.disconnect();
                             log = false;
